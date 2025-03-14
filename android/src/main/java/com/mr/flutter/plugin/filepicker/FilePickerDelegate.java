@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.io.IOException;
 import java.util.Objects;
 
 import io.flutter.plugin.common.EventChannel;
@@ -102,10 +103,37 @@ public class FilePickerDelegate implements PluginRegistry.ActivityResultListener
             return false;
         }
 
+
+        if (data != null && data.getData() != null) {
+            final Uri intentData = data.getData();
+            Log.i(TAG, "Intent Data: " + intentData.toString());
+            
+            try {
+                final File dataDir = activity.getApplicationContext().getDataDir();
+                final String dataDirPath = dataDir.getCanonicalPath();
+                Log.i(TAG, "Data dir: " + dataDirPath);
+                int cut = dataDirPath.lastIndexOf('/');
+                if (cut != -1) {
+                    final String dataDirName = dataDirPath.substring(cut + 1);
+                    Log.i(TAG, "Data dir name: " + dataDirName);
+                    if (intentData.toString().contains(dataDirName)) {
+                        finishWithError("Error File not found", "");
+                        return false;
+                    }
+                }
+            }
+            catch (IOException e) {
+                Log.i(TAG, "Error while getting data dir", e);
+                finishWithError("Error while getting data dir", e.getMessage());
+                return false;
+            }
+        }
+
         // Pick files
         if (type == null) {
             return false;
         }
+
 
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             this.dispatchEventStatus(true);
